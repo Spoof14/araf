@@ -38,6 +38,7 @@ class App extends Component {
 		while(champs.size < numberOfChampions){
 			var random = Math.floor(Math.random() * Object.keys(champions.data).length + 1);
 			var key = Object.keys(champions.data)[random];
+			console.log(Object.keys(champions.data).length)
 			var element = champions.data[key];
 			champs.set(element.name, element)
 		}
