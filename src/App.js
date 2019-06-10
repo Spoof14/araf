@@ -31,8 +31,12 @@ class App extends Component {
 		})
 		
 		return (
-			<div className="App" style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
-				{divs}
+			<div className="App" style={{display:'flex', flexDirection:'column'}}>
+				<h1>All Random All Fill</h1>
+				<div className="champion-list" style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
+					{divs}
+				</div>
+				<footer style={{position:'absolute', bottom:0, margin:'1rem 1rem', background:'#222', color:'#FEFEFE', padding:'0.5rem', borderRadius:'1rem'}}>You can now reroll a champion by clicking the image of the one you want to change.</footer>
 			</div>
 		);
 	}
