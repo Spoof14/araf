@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import './App.css';
 import champions from './champion.json'
+import Header from './utility/Header';
+import Modal from './utility/Modal';
+import Login from './components/login/Login';
 
 class App extends Component {
 	constructor(props) {
@@ -8,35 +11,80 @@ class App extends Component {
 
 		this.state = {
 			roles: ["Top", "Jungle", "Mid", "Bottom", "Support"],
-			randomChampions:[]
+			randomChampions:[],
+			showModal:'',
+			summonerName:''
 		}
+		this.toggleModal = this.toggleModal.bind(this)
+		this.onChange = this.onChange.bind(this);
+		this.saveSummonerName = this.saveSummonerName.bind(this);
+		this.logout = this.logout.bind(this);
 	}
 
 	componentDidMount(){
+		let summonerName = localStorage.getItem('summonerName')
 		this.setState({
-			randomChampions:this.rollChampions(5)
+			randomChampions:this.rollChampions(5),
+			summonerName: summonerName !== 'undefined' ? summonerName : ''
 		}) 
+	}
+	toggleModal(modal) {
+		this.setState({
+			showModal: modal
+		})
+	}
+	onChange(e){
+		this.setState({
+			[e.target.name]:e.target.value
+		})
+	}
+	saveSummonerName(e){
+		e.preventDefault();
+		if(/^[0-9a-z _.]+$/.test(this.state.summonerName)){
+			localStorage.setItem('summonerName', this.state.summonerName);
+			this.toggleModal('');
+			this.setState({msg:''})
+		}
+		else{
+			this.setState({
+				msg:'Invalid summoner name'
+			})
+		}
+
+	}
+	logout(){
+		console.log('asdsa')
+		localStorage.setItem('summonerName', '')
+		this.setState({
+			summonerName:''
+		})
 	}
 
 	render() {
-		let {randomChampions} = this.state;
+		let { randomChampions, showModal, summonerName, msg } = this.state;
 		let divs = randomChampions.map((champ, index) => {
 			return (
-				<div key={champ.name} onClick={() => this.rerollChampion(index)} style={{ display: 'flex', flexDirection: 'column', margin: '1rem', cursor: 'pointer' }} >
+				<div key={champ.name} className="champion-list-item" onClick={() => this.rerollChampion(index)}  >
 					<span>{champ.name}</span>
 					<img src={`${process.env.PUBLIC_URL}/champion/${champ.image}`} height='100px' width='100px' alt="champion"></img>
 					<span>{this.state.roles[index]}</span>
 				</div>
 			)
 		})
-		
+
 		return (
-			<div className="App" style={{display:'flex', flexDirection:'column'}}>
-				<h1>All Random All Fill</h1>
-				<div className="champion-list" style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
+			<div className="App" >
+				<Header title="All Random All Fill" onClick={() => !!summonerName ? this.logout() : this.toggleModal('login')} hasToken={!!summonerName}></Header>
+				<div className="champion-list" >
 					{divs}
 				</div>
-				<footer style={{position:'absolute', bottom:0, margin:'1rem 1rem', background:'#222', color:'#FEFEFE', padding:'0.5rem', borderRadius:'1rem'}}>You can now reroll a champion by clicking the image of the one you want to change.</footer>
+				<footer className="footer">You can now reroll a champion by clicking the image of the one you want to change.</footer>
+				{
+					showModal === 'login' &&
+					<Modal showModal={showModal}>
+						<Login onChange={this.onChange} onSubmit={this.saveSummonerName} msg={msg}></Login>
+					</Modal>
+				}
 			</div>
 		);
 	}
@@ -47,7 +95,7 @@ class App extends Component {
 		while(champs.length < 5){
 			let element = this.rollChampion();
 			
-			if(!champs.some(e => e.name === element.name))
+			if(!this.someChampIsSame(champs, element))
 				champs.push(element)
 		}
 		return champs
