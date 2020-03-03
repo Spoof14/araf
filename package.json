@@ -1,6 +1,7 @@
 {
   "name": "araf",
   "version": "0.1.0",
+  "homepage": "http://spoof14.github.io/araf",
   "private": true,
   "dependencies": {
     "react": "^16.8.6",
