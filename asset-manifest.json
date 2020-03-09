@@ -1,17 +1,17 @@
 {
   "files": {
     "main.css": "/araf/static/css/main.3e685bcf.chunk.css",
-    "main.js": "/araf/static/js/main.7db30154.chunk.js",
-    "main.js.map": "/araf/static/js/main.7db30154.chunk.js.map",
+    "main.js": "/araf/static/js/main.986de6e8.chunk.js",
+    "main.js.map": "/araf/static/js/main.986de6e8.chunk.js.map",
     "runtime-main.js": "/araf/static/js/runtime-main.f56aecce.js",
     "runtime-main.js.map": "/araf/static/js/runtime-main.f56aecce.js.map",
-    "static/js/2.2b4e0826.chunk.js": "/araf/static/js/2.2b4e0826.chunk.js",
-    "static/js/2.2b4e0826.chunk.js.map": "/araf/static/js/2.2b4e0826.chunk.js.map",
+    "static/js/2.1abf4e27.chunk.js": "/araf/static/js/2.1abf4e27.chunk.js",
+    "static/js/2.1abf4e27.chunk.js.map": "/araf/static/js/2.1abf4e27.chunk.js.map",
     "index.html": "/araf/index.html",
-    "precache-manifest.f730e237275a81a488555b5e38eabd16.js": "/araf/precache-manifest.f730e237275a81a488555b5e38eabd16.js",
+    "precache-manifest.47455d713abd7b83351a676e4481fed8.js": "/araf/precache-manifest.47455d713abd7b83351a676e4481fed8.js",
     "service-worker.js": "/araf/service-worker.js",
     "static/css/main.3e685bcf.chunk.css.map": "/araf/static/css/main.3e685bcf.chunk.css.map",
-    "static/js/2.2b4e0826.chunk.js.LICENSE.txt": "/araf/static/js/2.2b4e0826.chunk.js.LICENSE.txt",
+    "static/js/2.1abf4e27.chunk.js.LICENSE.txt": "/araf/static/js/2.1abf4e27.chunk.js.LICENSE.txt",
     "static/media/Aatrox.png": "/araf/static/media/Aatrox.6be67386.png",
     "static/media/Ahri.png": "/araf/static/media/Ahri.3f02d710.png",
     "static/media/Akali.png": "/araf/static/media/Akali.cc8b7f71.png",
@@ -159,8 +159,8 @@
   },
   "entrypoints": [
     "static/js/runtime-main.f56aecce.js",
-    "static/js/2.2b4e0826.chunk.js",
+    "static/js/2.1abf4e27.chunk.js",
     "static/css/main.3e685bcf.chunk.css",
-    "static/js/main.7db30154.chunk.js"
+    "static/js/main.986de6e8.chunk.js"
   ]
 }
