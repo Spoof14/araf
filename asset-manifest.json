@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/araf/static/css/main.3e685bcf.chunk.css",
-    "main.js": "/araf/static/js/main.986de6e8.chunk.js",
-    "main.js.map": "/araf/static/js/main.986de6e8.chunk.js.map",
+    "main.js": "/araf/static/js/main.f0955555.chunk.js",
+    "main.js.map": "/araf/static/js/main.f0955555.chunk.js.map",
     "runtime-main.js": "/araf/static/js/runtime-main.f56aecce.js",
     "runtime-main.js.map": "/araf/static/js/runtime-main.f56aecce.js.map",
     "static/js/2.1abf4e27.chunk.js": "/araf/static/js/2.1abf4e27.chunk.js",
     "static/js/2.1abf4e27.chunk.js.map": "/araf/static/js/2.1abf4e27.chunk.js.map",
     "index.html": "/araf/index.html",
-    "precache-manifest.47455d713abd7b83351a676e4481fed8.js": "/araf/precache-manifest.47455d713abd7b83351a676e4481fed8.js",
+    "precache-manifest.2abb2d78bf96e5796d33277b65dc53f5.js": "/araf/precache-manifest.2abb2d78bf96e5796d33277b65dc53f5.js",
     "service-worker.js": "/araf/service-worker.js",
     "static/css/main.3e685bcf.chunk.css.map": "/araf/static/css/main.3e685bcf.chunk.css.map",
     "static/js/2.1abf4e27.chunk.js.LICENSE.txt": "/araf/static/js/2.1abf4e27.chunk.js.LICENSE.txt",
@@ -161,6 +161,6 @@
     "static/js/runtime-main.f56aecce.js",
     "static/js/2.1abf4e27.chunk.js",
     "static/css/main.3e685bcf.chunk.css",
-    "static/js/main.986de6e8.chunk.js"
+    "static/js/main.f0955555.chunk.js"
   ]
 }
