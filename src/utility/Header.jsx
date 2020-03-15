@@ -11,9 +11,9 @@ export default class Header extends PureComponent {
                     </a>
 
                 </h1>
-                <div className="navigation-header">
+                {/* <div className="navigation-header">
                     <div className="button" onClick={onClick}>{hasToken ?'Remove summoner' : 'Choose summoner'}</div>
-                </div>
+                </div> */}
             </div>
 
         )

@@ -1,10 +1,17 @@
+
 .App {
   text-align: center;
-  height:100vh;
+  height:100%;
   background-color: #282c34;
   color:white;
   display:flex;
-  flex-direction:column
+  flex-direction:column;
+  box-sizing: border-box;
+}
+.App * {
+  box-sizing: inherit;
+  display: flex;
+  flex-direction: column;
 }
 .container h1 {
   background-color: #282c34;
@@ -15,7 +22,7 @@
   font-size: calc(10px + 2vmin);
   color: white;
 }
-.footer{position:absolute; bottom:0; margin:1rem 1rem; background:#222; color:#FEFEFE; padding:0.5rem; border-radius:1rem}
+.footer{ position: relative; align-self: center; bottom:0; margin:1rem 1rem; background:#222; color:#FEFEFE; padding:0.5rem; border-radius:1rem}
 .button{ padding:0.5rem; background: #0F0F0F; cursor: pointer;}
 .modal{
   z-index: 3;
@@ -56,5 +63,6 @@ a{
 
 .navigation-header{ display: flex; flex-direction: row; justify-content: flex-end; margin: 0.5rem 1rem;}
 
-.champion-list{display:flex; flex-direction:row; align-items:center; justify-content:center}
-.champion-list-item{display: flex; flex-direction: column; margin: 1rem; cursor: pointer}
+.champion-list{display:flex; flex-direction:row; align-items:center; justify-content:center; flex-wrap: wrap;}
+.champion-list-item{display: flex; flex-direction: column; margin: 1rem 0; cursor: pointer; align-items: center;}
+.champion-list-item img {max-width: 50%; border-radius: 10%; object-fit: fill; }

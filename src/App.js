@@ -66,7 +66,7 @@ class App extends Component {
 			return (
 				<div key={champ.name} className="champion-list-item" onClick={() => this.rerollChampion(index)}  >
 					<span>{champ.name}</span>
-					<img src={`${process.env.PUBLIC_URL}/champion/${champ.image}`} height='100px' width='100px' alt="champion"></img>
+					<img src={`${process.env.PUBLIC_URL}/champion/${champ.image}`} alt="champion"></img>
 					<span>{this.state.roles[index]}</span>
 				</div>
 			)
@@ -78,7 +78,9 @@ class App extends Component {
 				<div className="champion-list" >
 					{divs}
 				</div>
-				<footer className="footer">You can now reroll a champion by clicking the image of the one you want to change.</footer>
+				<footer className="footer">
+					You can now reroll a champion by clicking the image of the one you want to change.
+				</footer>
 				{
 					showModal === 'login' &&
 					<Modal showModal={showModal}>
