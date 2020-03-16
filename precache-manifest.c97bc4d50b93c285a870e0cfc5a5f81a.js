@@ -1,11 +1,11 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "6f5221f2af7c1a8f2b248e3967b0adee",
+    "revision": "21cc948b05f2f53e0d2be2d232d443cf",
     "url": "/araf/index.html"
   },
   {
-    "revision": "5bc7fde798ad9991590a",
-    "url": "/araf/static/css/main.ce883e37.chunk.css"
+    "revision": "d09443ae364e3bbb9bdc",
+    "url": "/araf/static/css/main.b3a14203.chunk.css"
   },
   {
     "revision": "7f0bd3e52a71bb775bd1",
@@ -16,7 +16,7 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/araf/static/js/2.1b892331.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "5bc7fde798ad9991590a",
+    "revision": "d09443ae364e3bbb9bdc",
     "url": "/araf/static/js/main.565845ec.chunk.js"
   },
   {
