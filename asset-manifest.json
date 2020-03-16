@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/araf/static/css/main.05540e83.chunk.css",
-    "main.js": "/araf/static/js/main.9d8b2e15.chunk.js",
-    "main.js.map": "/araf/static/js/main.9d8b2e15.chunk.js.map",
+    "main.css": "/araf/static/css/main.b14c7475.chunk.css",
+    "main.js": "/araf/static/js/main.565845ec.chunk.js",
+    "main.js.map": "/araf/static/js/main.565845ec.chunk.js.map",
     "runtime-main.js": "/araf/static/js/runtime-main.f56aecce.js",
     "runtime-main.js.map": "/araf/static/js/runtime-main.f56aecce.js.map",
     "static/js/2.1b892331.chunk.js": "/araf/static/js/2.1b892331.chunk.js",
     "static/js/2.1b892331.chunk.js.map": "/araf/static/js/2.1b892331.chunk.js.map",
     "index.html": "/araf/index.html",
-    "precache-manifest.1bf79dbaedac44742160c010a9ef8f05.js": "/araf/precache-manifest.1bf79dbaedac44742160c010a9ef8f05.js",
+    "precache-manifest.ffa74d6fa8b320e2800cb04513da3f25.js": "/araf/precache-manifest.ffa74d6fa8b320e2800cb04513da3f25.js",
     "service-worker.js": "/araf/service-worker.js",
-    "static/css/main.05540e83.chunk.css.map": "/araf/static/css/main.05540e83.chunk.css.map",
+    "static/css/main.b14c7475.chunk.css.map": "/araf/static/css/main.b14c7475.chunk.css.map",
     "static/js/2.1b892331.chunk.js.LICENSE.txt": "/araf/static/js/2.1b892331.chunk.js.LICENSE.txt",
     "static/media/Aatrox.png": "/araf/static/media/Aatrox.6be67386.png",
     "static/media/Ahri.png": "/araf/static/media/Ahri.3f02d710.png",
@@ -160,7 +160,7 @@
   "entrypoints": [
     "static/js/runtime-main.f56aecce.js",
     "static/js/2.1b892331.chunk.js",
-    "static/css/main.05540e83.chunk.css",
-    "static/js/main.9d8b2e15.chunk.js"
+    "static/css/main.b14c7475.chunk.css",
+    "static/js/main.565845ec.chunk.js"
   ]
 }
