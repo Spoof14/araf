@@ -30,6 +30,7 @@ export async function fetchChampionList({ version, locale = 'en_US' }) {
   return Object.keys(data).map((key) => {
     const champ = data[key];
     return {
+      id: champ.id,
       name: champ.name,
       image: champ.image && champ.image.full ? champ.image.full : '',
     };
