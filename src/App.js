@@ -24,6 +24,7 @@ class App extends Component {
 			championImageBaseUrl: `${process.env.PUBLIC_URL}/champion/`,
 			championSource: 'local', // 'ddragon' | 'local'
 			lockedSlots: [false, false, false, false, false],
+			imageLoaded: [false, false, false, false, false],
 			toast: ''
 		}
 		this.toggleModal = this.toggleModal.bind(this)
@@ -57,7 +58,8 @@ class App extends Component {
 				championPool: pool,
 				championImageBaseUrl: imageBaseUrl,
 				championSource: source,
-				randomChampions: initialRoll
+				randomChampions: initialRoll,
+				imageLoaded: [false, false, false, false, false]
 			},
 			() => this.syncUrlWithRoll()
 		);
@@ -170,13 +172,24 @@ class App extends Component {
 	}
 
 	render() {
-		let { randomChampions, showModal, summonerName, msg, championImageBaseUrl, lockedSlots, championSource, toast } = this.state;
+		let { randomChampions, showModal, summonerName, msg, championImageBaseUrl, lockedSlots, championSource, toast, imageLoaded } = this.state;
 		let divs = randomChampions.map((champ, index) => {
+			const loaded = !!imageLoaded[index];
+			const imgSrc = `${championImageBaseUrl}${champ.image}`;
 			return (
 				<div key={champ.id || champ.name} className={`champion-list-item ${lockedSlots[index] ? 'locked' : ''}`} onClick={() => this.rerollChampion(index)}  >
-					<span>{champ.name}</span>
-					<img src={`${championImageBaseUrl}${champ.image}`} alt="champion"></img>
-					<span>{this.state.roles[index]}</span>
+					<div className="champion-title">{champ.name}</div>
+					<div className="champion-image" aria-busy={!loaded}>
+						{!loaded && <div className="image-placeholder" aria-hidden="true"></div>}
+						<img
+							src={imgSrc}
+							alt={champ.name}
+							className={loaded ? 'loaded' : 'loading'}
+							onLoad={() => this.markImageLoaded(index, champ.id)}
+							onError={() => this.markImageLoaded(index, champ.id)}
+						/>
+					</div>
+					<div className="champion-role">{this.state.roles[index]}</div>
 					<button
 						className="slot-button"
 						onClick={(e) => { e.stopPropagation(); this.toggleLock(index); }}
@@ -263,7 +276,9 @@ class App extends Component {
 			newChamp = this.rollChampion()
 		}
 		randomChampions[index] = newChamp
-		this.setState({ randomChampions }, () => this.syncUrlWithRoll());
+		const imageLoaded = this.state.imageLoaded.slice();
+		imageLoaded[index] = false;
+		this.setState({ randomChampions, imageLoaded }, () => this.syncUrlWithRoll());
 
 	}
 
@@ -272,6 +287,7 @@ class App extends Component {
 		if(!Array.isArray(randomChampions) || randomChampions.length !== 5) return;
 
 		const next = randomChampions.slice();
+		const imageLoaded = this.state.imageLoaded.slice();
 		const used = new Set();
 
 		// Keep locked champs.
@@ -297,10 +313,24 @@ class App extends Component {
 			if(candidate){
 				next[i] = candidate;
 				used.add(candidate.id);
+				imageLoaded[i] = false;
 			}
 		}
 
-		this.setState({ randomChampions: next }, () => this.syncUrlWithRoll());
+		this.setState({ randomChampions: next, imageLoaded }, () => this.syncUrlWithRoll());
+	}
+
+	markImageLoaded(index, champId){
+		try{
+			const current = this.state.randomChampions[index];
+			if(!current || current.id !== champId) return;
+			const imageLoaded = this.state.imageLoaded.slice();
+			if(imageLoaded[index]) return;
+			imageLoaded[index] = true;
+			this.setState({ imageLoaded });
+		}catch(_e){
+			// ignore
+		}
 	}
 
 	toggleLock(index){
