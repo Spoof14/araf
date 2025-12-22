@@ -4,6 +4,11 @@ import champions from './champion.json'
 import Header from './utility/Header';
 import Modal from './utility/Modal';
 import Login from './components/login/Login';
+import {
+	fetchLatestDDragonVersion,
+	fetchChampionList,
+	getChampionImageBaseUrl
+} from './utility/ddragon';
 
 class App extends Component {
 	constructor(props) {
@@ -13,7 +18,9 @@ class App extends Component {
 			roles: ["Top", "Jungle", "Mid", "Bottom", "Support"],
 			randomChampions:[],
 			showModal:'',
-			summonerName:''
+			summonerName:'',
+			championPool: [],
+			championImageBaseUrl: `${process.env.PUBLIC_URL}/champion/`
 		}
 		this.toggleModal = this.toggleModal.bind(this)
 		this.onChange = this.onChange.bind(this);
@@ -21,12 +28,47 @@ class App extends Component {
 		this.logout = this.logout.bind(this);
 	}
 
-	componentDidMount(){
+	async componentDidMount(){
 		let summonerName = localStorage.getItem('summonerName')
 		this.setState({
-			randomChampions:this.rollChampions(5),
 			summonerName: summonerName !== 'undefined' ? summonerName : ''
-		}) 
+		})
+
+		// Try to load latest champions from Riot Data Dragon (no API key).
+		// Fall back to bundled champion.json if fetch/network isn't available.
+		await this.loadChampionPool();
+		this.setState({
+			randomChampions: this.rollChampions(5)
+		})
+	}
+
+	async loadChampionPool() {
+		try {
+			if (typeof fetch !== 'function') {
+				throw new Error('fetch not available');
+			}
+
+			const version = await fetchLatestDDragonVersion();
+			const list = await fetchChampionList({ version, locale: 'en_US' });
+			if (!Array.isArray(list) || list.length === 0) {
+				throw new Error('Empty champion list');
+			}
+
+			this.setState({
+				championPool: list,
+				championImageBaseUrl: getChampionImageBaseUrl(version)
+			});
+		} catch (e) {
+			// Local fallback (keeps app working offline and in tests).
+			const localPool = Object.keys(champions.data).map((key) => {
+				const c = champions.data[key];
+				return { name: c.name, image: c.image.full };
+			});
+			this.setState({
+				championPool: localPool,
+				championImageBaseUrl: `${process.env.PUBLIC_URL}/champion/`
+			});
+		}
 	}
 	toggleModal(modal) {
 		this.setState({
@@ -61,12 +103,12 @@ class App extends Component {
 	}
 
 	render() {
-		let { randomChampions, showModal, summonerName, msg } = this.state;
+		let { randomChampions, showModal, summonerName, msg, championImageBaseUrl } = this.state;
 		let divs = randomChampions.map((champ, index) => {
 			return (
 				<div key={champ.name} className="champion-list-item" onClick={() => this.rerollChampion(index)}  >
 					<span>{champ.name}</span>
-					<img src={`${process.env.PUBLIC_URL}/champion/${champ.image}`} alt="champion"></img>
+					<img src={`${championImageBaseUrl}${champ.image}`} alt="champion"></img>
 					<span>{this.state.roles[index]}</span>
 				</div>
 			)
@@ -93,6 +135,9 @@ class App extends Component {
 
 
 	rollChampions() {
+		const pool = this.state.championPool;
+		if (!Array.isArray(pool) || pool.length === 0) return [];
+
 		let champs = []
 		while(champs.length < 5){
 			let element = this.rollChampion();
@@ -106,10 +151,10 @@ class App extends Component {
 
 
 	rollChampion(){
-		var random = Math.floor(Math.random() * Object.keys(champions.data).length);
-		var key = Object.keys(champions.data)[random];
-		var element = champions.data[key];
-		return {name: element.name, image: element.image.full}
+		const pool = this.state.championPool;
+		var random = Math.floor(Math.random() * pool.length);
+		var element = pool[random];
+		return {name: element.name, image: element.image}
 	}
 
 	someChampIsSame(array, newChamp){
