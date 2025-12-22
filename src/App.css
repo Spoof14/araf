@@ -160,3 +160,14 @@ a{
   .slot-button{ padding: 0.25rem 0.55rem; font-size: 0.85rem; }
   .footer{ margin: 0.5rem; padding: 0.4rem 0.6rem; }
 }
+
+/* Phone portrait: stack vertically (2 columns, 3 rows) */
+@media (max-width: 700px) and (orientation: portrait){
+  .champion-list{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: center;
+  }
+  .champion-image{
+    max-width: clamp(84px, 14vh, 150px);
+  }
+}
