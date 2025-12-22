@@ -212,9 +212,11 @@ class App extends Component {
 					onRerollAll={this.rerollAll}
 					onShare={this.shareRoll}
 				/>
-				<div className="champion-list" >
-					{divs}
-				</div>
+				<main className="main">
+					<div className="champion-list" >
+						{divs}
+					</div>
+				</main>
 				<footer className="footer">
 					<div className="footer-row">
 						<span>Click a slot to reroll it (unless locked).</span>
