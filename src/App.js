@@ -223,9 +223,10 @@ class App extends Component {
 		const pool = poolOverride ? poolOverride : this.state.championPool;
 		if (!Array.isArray(pool) || pool.length === 0) return [];
 
+		const count = typeof _count === 'number' && _count > 0 ? _count : 5;
 		let champs = []
-		while(champs.length < 5){
-			let element = this.rollChampion();
+		while(champs.length < count){
+			let element = this.rollChampionFromPool(pool);
 			
 			if(!this.someChampIsSame(champs, element))
 				champs.push(element)
@@ -233,15 +234,22 @@ class App extends Component {
 		return champs
 	}
 
-	rollChampion(){
-		const pool = this.state.championPool;
+	rollChampionFromPool(pool){
+		if(!Array.isArray(pool) || pool.length === 0) return null;
 		var random = Math.floor(Math.random() * pool.length);
 		var element = pool[random];
+		if(!element) return null;
 		return {id: element.id, name: element.name, image: element.image}
 	}
 
+	rollChampion(poolOverride){
+		const pool = poolOverride ? poolOverride : this.state.championPool;
+		return this.rollChampionFromPool(pool);
+	}
+
 	someChampIsSame(array, newChamp){
-		return array.some(champ => champ.id === newChamp.id)
+		if(!newChamp) return false;
+		return array.some(champ => champ && champ.id === newChamp.id)
 	}
 	
 	rerollChampion(index){
