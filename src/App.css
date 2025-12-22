@@ -23,7 +23,9 @@
   color: white;
 }
 .footer{ position: relative; align-self: center; bottom:0; margin:1rem 1rem; background:#222; color:#FEFEFE; padding:0.5rem; border-radius:1rem}
-.button{ padding:0.5rem; background: #0F0F0F; cursor: pointer;}
+.button{ padding:0.5rem; background: #0F0F0F; cursor: pointer; border:0; color:#FEFEFE; border-radius: 10px;}
+.button:hover{ background:#1b1b1b; }
+.button:active{ transform: translateY(1px); }
 .modal{
   z-index: 3;
   padding-top: 100px;
@@ -62,7 +64,18 @@ a{
 }
 
 .navigation-header{ display: flex; flex-direction: row; justify-content: flex-end; margin: 0.5rem 1rem;}
+.header{ display:flex; flex-direction: column; }
+.header-actions{ display:flex; flex-direction: row; gap: 0.5rem; align-items: center;}
+.header-left{ display:flex; flex-direction: row; align-items:center; }
+.header-meta{ font-size: 0.9rem; opacity: 0.85; }
 
 .champion-list{display:flex; flex-direction:row; align-items:center; justify-content:center; flex-wrap: wrap;}
-.champion-list-item{display: flex; flex-direction: column; margin: 1rem 0; cursor: pointer; align-items: center;}
+.champion-list-item{display: flex; flex-direction: column; margin: 1rem 0; cursor: pointer; align-items: center; padding:0.5rem; border-radius: 12px;}
 .champion-list-item img {max-width: 50%; border-radius: 10%; object-fit: fill; }
+.champion-list-item.locked{ opacity: 0.75; }
+.slot-button{ margin-top: 0.5rem; padding: 0.35rem 0.75rem; border-radius: 10px; border: 1px solid #444; background:#111; color:#FEFEFE; cursor: pointer; }
+.slot-button:hover{ background:#1b1b1b; }
+
+.footer-row{ display:flex; flex-direction: row; gap: 0.75rem; align-items: center; justify-content: center; flex-wrap: wrap;}
+.source-pill{ background:#0F0F0F; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.85rem; opacity: 0.9; border: 1px solid #333; }
+.toast{ margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.9; }

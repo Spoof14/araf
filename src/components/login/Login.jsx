@@ -3,13 +3,20 @@ import './Login.css'
 
 export default class Login extends PureComponent {
     render() {
-        let {onChange, onSubmit, name, msg } = this.props
+        let { onChange, onSubmit, summonerName, msg } = this.props
         return (
             <form className="login-container" onSubmit={onSubmit}>
                 <div className="login-input">
                     <label>
                         Summoner name:
-                        <input required pattern={/^[0-9a-z _.]+$/} type="text" name="summonerName" onChange={onChange} value={name}></input>
+                        <input
+                            required
+                            pattern="^[0-9a-z _.]+$"
+                            type="text"
+                            name="summonerName"
+                            onChange={onChange}
+                            value={summonerName || ''}
+                        ></input>
                     </label>
                 </div>
                 {
@@ -17,7 +24,7 @@ export default class Login extends PureComponent {
                     &&
                     <span style={{color:'red'}}>{msg}</span>
                 }
-                <input type="submit" onClick={onSubmit} value="Save"></input>
+                <input type="submit" value="Save"></input>
             </form>
         )
     }
