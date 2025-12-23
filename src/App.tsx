@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import './App.css';
 import championsJson from './champion.json';
@@ -25,34 +25,6 @@ type ChampionData = {
   source: ChampionSource;
 };
 
-type AppState = {
-  activeModal: ActiveModal;
-  lockedSlots: boolean[];
-  toast: string;
-
-  players: string[];
-  region: string;
-  usePlayerPools: boolean;
-  playerPools: Array<Champion[] | null>;
-  poolsLoading: boolean;
-  poolsError: string;
-
-  rollIds: string[];
-};
-
-type Action =
-  | { type: 'openModal'; modal: ActiveModal }
-  | { type: 'closeModal' }
-  | { type: 'toggleLock'; index: number }
-  | { type: 'setToast'; toast: string }
-  | { type: 'setPlayers'; players: string[] }
-  | { type: 'setRegion'; region: string }
-  | { type: 'setUsePlayerPools'; use: boolean }
-  | { type: 'poolsLoading' }
-  | { type: 'poolsError'; error: string }
-  | { type: 'setPlayerPools'; pools: Array<Champion[] | null> }
-  | { type: 'setRollIds'; rollIds: string[] };
-
 function getLocalChampionPool(): Champion[] {
   const data: any = (championsJson as any).data;
   return Object.keys(data).map((id) => {
@@ -69,13 +41,9 @@ function getLocalChampionPool(): Champion[] {
 function buildChampionByKey(pool: Champion[]): Record<string, Champion> {
   const map: Record<string, Champion> = {};
   for (const c of pool) {
-    if (c.key) map[c.key] = c;
+    if (c.key) map[String(c.key)] = c;
   }
   return map;
-}
-
-function allPlayersFilled(players: string[]): boolean {
-  return players.length === 5 && players.every((p) => p.trim().length > 0);
 }
 
 function readPlayersFromStorage(): string[] {
@@ -83,8 +51,10 @@ function readPlayersFromStorage(): string[] {
     const raw = localStorage.getItem('players');
     if (!raw) return ['', '', '', '', ''];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length !== 5) return ['', '', '', '', ''];
-    return parsed.map((p) => String(p ?? ''));
+    if (!Array.isArray(parsed)) return ['', '', '', '', ''];
+    const normalized = parsed.slice(0, 5).map((p) => String(p ?? ''));
+    while (normalized.length < 5) normalized.push('');
+    return normalized;
   } catch {
     return ['', '', '', '', ''];
   }
@@ -105,19 +75,13 @@ function readRollIdsFromUrl(): string[] {
 }
 
 function validateRollIds(pool: Champion[], rollIds: string[]): string[] | null {
-  try {
-    if (pool.length === 0) return null;
-    const byId = new Map(pool.map((c) => [c.id, c]));
-    if (rollIds.length !== 5) return null;
-    const unique = new Set(rollIds);
-    if (unique.size !== 5) return null;
-    for (const id of rollIds) {
-      if (!byId.get(id)) return null;
-    }
-    return rollIds;
-  } catch {
-    return null;
-  }
+  if (pool.length === 0) return null;
+  if (rollIds.length !== 5) return null;
+  const unique = new Set(rollIds);
+  if (unique.size !== 5) return null;
+  const byId = new Set(pool.map((c) => c.id));
+  for (const id of rollIds) if (!byId.has(id)) return null;
+  return rollIds;
 }
 
 function syncUrlWithRollIds(rollIds: string[]) {
@@ -135,7 +99,7 @@ function syncUrlWithRollIds(rollIds: string[]) {
 }
 
 function rollChampionFromPool(pool: Champion[]): Champion | null {
-  if (pool.length === 0) return null;
+  if (!Array.isArray(pool) || pool.length === 0) return null;
   const idx = Math.floor(Math.random() * pool.length);
   const c = pool[idx];
   return c ? { ...c } : null;
@@ -147,7 +111,7 @@ function someChampIsSame(array: Champion[], newChamp: Champion | null): boolean 
 }
 
 function rollChampions(count: number, pool: Champion[]): Champion[] {
-  if (pool.length === 0) return [];
+  if (!Array.isArray(pool) || pool.length === 0) return [];
   const target = count > 0 ? count : 5;
   const champs: Champion[] = [];
   let guard = 0;
@@ -160,6 +124,8 @@ function rollChampions(count: number, pool: Champion[]): Champion[] {
 }
 
 export default function App() {
+  const didInit = useRef(false);
+
   const roles = useMemo(
     () => ['Top', 'Jungle', 'Mid', 'Bottom', 'Support'],
     []
@@ -171,63 +137,35 @@ export default function App() {
     source: 'local',
   });
 
-  const initialState: AppState = useMemo(() => {
-    const savedPlayers = readPlayersFromStorage();
-    const savedRegion = localStorage.getItem('region') || 'na1';
-    const savedUsePools = localStorage.getItem('usePlayerPools') === 'true';
-    return {
-      activeModal: '',
-      lockedSlots: [false, false, false, false, false],
-      toast: '',
-      players: savedPlayers,
-      region: savedRegion,
-      usePlayerPools: savedUsePools,
-      playerPools: [null, null, null, null, null],
-      poolsLoading: false,
-      poolsError: '',
-      rollIds: readRollIdsFromUrl(),
-    };
-  }, []);
+  const [activeModal, setActiveModal] = useState<ActiveModal>('');
+  const [lockedSlots, setLockedSlots] = useState<boolean[]>([
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
+  const [toast, setToast] = useState<string>('');
 
-  const [state, dispatch] = useReducer(
-    (s: AppState, a: Action): AppState => {
-      switch (a.type) {
-        case 'openModal':
-          return { ...s, activeModal: a.modal };
-        case 'closeModal':
-          return { ...s, activeModal: '' };
-        case 'toggleLock': {
-          const lockedSlots = s.lockedSlots.slice();
-          lockedSlots[a.index] = !lockedSlots[a.index];
-          return { ...s, lockedSlots };
-        }
-        case 'setToast':
-          return { ...s, toast: a.toast };
-        case 'setPlayers':
-          return { ...s, players: a.players };
-        case 'setRegion':
-          return { ...s, region: a.region };
-        case 'setUsePlayerPools':
-          return { ...s, usePlayerPools: a.use };
-        case 'poolsLoading':
-          return { ...s, poolsLoading: true, poolsError: '' };
-        case 'poolsError':
-          return { ...s, poolsLoading: false, poolsError: a.error };
-        case 'setPlayerPools':
-          return { ...s, poolsLoading: false, poolsError: '', playerPools: a.pools };
-        case 'setRollIds':
-          return { ...s, rollIds: a.rollIds };
-        default:
-          return s;
-      }
-    },
-    initialState
+  const [players, setPlayers] = useState<string[]>(readPlayersFromStorage());
+  const [region, setRegion] = useState<string>(
+    localStorage.getItem('region') || 'na1'
   );
+  const [usePlayerPools, setUsePlayerPools] = useState<boolean>(
+    localStorage.getItem('usePlayerPools') === 'true'
+  );
+  const [playerPools, setPlayerPools] = useState<Array<Champion[] | null>>([
+    null,
+    null,
+    null,
+    null,
+    null,
+  ]);
+  const [poolsLoading, setPoolsLoading] = useState<boolean>(false);
+  const [poolsError, setPoolsError] = useState<string>('');
 
-  const championByKey = useMemo(
-    () => buildChampionByKey(championData.pool),
-    [championData.pool]
-  );
+  // In-app source of truth for the roll. URL mirrors this.
+  const [rollIds, setRollIds] = useState<string[]>(readRollIdsFromUrl());
 
   const championById = useMemo(() => {
     const map = new Map<string, Champion>();
@@ -235,32 +173,46 @@ export default function App() {
     return map;
   }, [championData.pool]);
 
+  const championByKey = useMemo(
+    () => buildChampionByKey(championData.pool),
+    [championData.pool]
+  );
+
+  const rolledChampions = useMemo(() => {
+    return rollIds
+      .map((id) => championById.get(id))
+      .filter(Boolean) as Champion[];
+  }, [championById, rollIds]);
+
   const teamLabel = useMemo(() => {
-    const filled = state.players.filter((p) => p.trim()).length;
+    const filled = players.filter((p) => p.trim()).length;
     return filled ? `Players ${filled}/5` : '';
-  }, [state.players]);
+  }, [players]);
 
   const getPoolForIndex = useCallback(
     (index: number): Champion[] => {
-      if (state.usePlayerPools) {
-        const p = state.playerPools[index];
-        if (Array.isArray(p) && p.length > 0) return p;
+      if (usePlayerPools) {
+        const name = (players[index] || '').trim();
+        const pool = playerPools[index];
+        if (name && Array.isArray(pool) && pool.length > 0) return pool;
       }
       return championData.pool;
     },
-    [championData.pool, state.playerPools, state.usePlayerPools]
+    [championData.pool, playerPools, players, usePlayerPools]
   );
 
   const loadPlayerPools = useCallback(
-    async (
-      playersArg: string[],
-      regionArg: string,
-      byKey: Record<string, Champion>
-    ) => {
-      dispatch({ type: 'poolsLoading' });
+    async (playersArg: string[], regionArg: string) => {
+      setPoolsLoading(true);
+      setPoolsError('');
       try {
-        const pools = await Promise.all(
-          playersArg.map(async (name) => {
+        const pools: Array<Champion[] | null> = [null, null, null, null, null];
+        const tasks = playersArg
+          .map((name, index) => ({ name: name.trim(), index }))
+          .filter((x) => x.name.length > 0);
+
+        const results = await Promise.all(
+          tasks.map(async ({ name, index }) => {
             const summoner = await fetchSummonerByName({
               region: regionArg,
               name,
@@ -275,41 +227,60 @@ export default function App() {
             const champs: Champion[] = [];
             const seen = new Set<string>();
             for (const m of list) {
-              const id = m && (m as any).championId != null ? String((m as any).championId) : null;
+              const id =
+                m && (m as any).championId != null
+                  ? String((m as any).championId)
+                  : null;
               if (!id) continue;
-              const c = byKey[id];
+              const c = championByKey[id];
               if (c && !seen.has(c.id)) {
                 seen.add(c.id);
                 champs.push(c);
               }
             }
-            return champs;
+            return { index, champs };
           })
         );
 
-        const emptyIdx = pools.findIndex((p) => !p || p.length === 0);
-        if (emptyIdx !== -1) throw new Error(`No champions found for player ${emptyIdx + 1}.`);
-
-        dispatch({ type: 'setPlayerPools', pools });
-      } catch (e) {
-        dispatch({
-          type: 'poolsError',
-          error: e instanceof Error ? e.message : 'Failed to load pools.',
+        const emptySlots: number[] = [];
+        results.forEach(({ index, champs }) => {
+          pools[index] = champs;
+          if (champs.length === 0) emptySlots.push(index);
         });
+        setPlayerPools(pools);
+        if (emptySlots.length > 0) {
+          setPoolsError(
+            `No champions found for player slot(s): ${emptySlots
+              .map((i) => i + 1)
+              .join(', ')}`
+          );
+        }
+      } catch (e) {
+        setPlayerPools([null, null, null, null, null]);
+        setPoolsError(e instanceof Error ? e.message : 'Failed to load pools.');
+      } finally {
+        setPoolsLoading(false);
       }
     },
-    []
+    [championByKey]
   );
 
-  // initial boot
+  // Initial boot: load champions, then normalize roll, then optionally load pools.
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+
     let mounted = true;
     (async () => {
       let data: ChampionData;
       try {
         const version = await fetchLatestDDragonVersion();
         const pool = await fetchChampionList({ version, locale: 'en_US' });
-        data = { pool, imageBaseUrl: getChampionImageBaseUrl(version), source: 'ddragon' };
+        data = {
+          pool,
+          imageBaseUrl: getChampionImageBaseUrl(version),
+          source: 'ddragon',
+        };
       } catch {
         data = {
           pool: getLocalChampionPool(),
@@ -320,86 +291,94 @@ export default function App() {
       if (!mounted) return;
       setChampionData(data);
 
-      // Ensure we have a valid roll for the loaded pool.
-      const validated = validateRollIds(data.pool, readRollIdsFromUrl());
-      const rollIds = validated ?? rollChampions(5, data.pool).map((c) => c.id);
-      dispatch({ type: 'setRollIds', rollIds });
-      syncUrlWithRollIds(rollIds);
+      const fromUrl = readRollIdsFromUrl();
+      const validated = validateRollIds(data.pool, fromUrl);
+      const nextRoll = validated ?? rollChampions(5, data.pool).map((c) => c.id);
+      setRollIds(nextRoll);
+      syncUrlWithRollIds(nextRoll);
 
-      if (state.usePlayerPools && allPlayersFilled(state.players)) {
-        await loadPlayerPools(
-          state.players.map((p) => p.trim()),
-          state.region,
-          buildChampionByKey(data.pool)
-        );
+      const savedPlayers = readPlayersFromStorage();
+      const savedRegion = localStorage.getItem('region') || 'na1';
+      const savedUsePools = localStorage.getItem('usePlayerPools') === 'true';
+      setPlayers(savedPlayers);
+      setRegion(savedRegion);
+      setUsePlayerPools(savedUsePools);
+
+      if (savedUsePools && savedPlayers.some((p) => p.trim())) {
+        await loadPlayerPools(savedPlayers, savedRegion);
       }
     })();
 
     return () => {
       mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadPlayerPools]);
 
-  // keyboard
+  // Keep URL in sync with roll
+  useEffect(() => {
+    const valid = validateRollIds(championData.pool, rollIds);
+    if (!valid) return;
+    syncUrlWithRollIds(valid);
+  }, [championData.pool, rollIds]);
+
+  // ESC closes modal
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && state.activeModal) dispatch({ type: 'closeModal' });
+      if (e.key === 'Escape' && activeModal) setActiveModal('');
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.activeModal]);
+  }, [activeModal]);
 
-  // Mirror roll -> URL (so rerolls update the link)
-  useEffect(() => {
-    const valid = validateRollIds(championData.pool, state.rollIds);
-    if (!valid) return;
-    syncUrlWithRollIds(valid);
-  }, [championData.pool, state.rollIds]);
+  const toggleLock = useCallback((index: number) => {
+    setLockedSlots((prev) => {
+      const next = prev.slice();
+      next[index] = !next[index];
+      return next;
+    });
+  }, []);
 
   const rerollChampion = useCallback(
     (index: number) => {
-      if (state.lockedSlots[index]) return;
+      if (lockedSlots[index]) return;
+      if (championData.pool.length === 0) return;
+      if (rolledChampions.length !== 5) return;
+
       const pool = getPoolForIndex(index);
-      const current = state.rollIds
-        .map((id) => championById.get(id))
-        .filter(Boolean) as Champion[];
-      if (current.length !== 5) return;
-      const curr = current[index];
+      const curr = rolledChampions[index];
       let candidate: Champion | null = curr ?? null;
       let attempts = 0;
       while (
         attempts < 500 &&
         ((candidate && curr && candidate.id === curr.id) ||
-          someChampIsSame(current, candidate))
+          someChampIsSame(rolledChampions, candidate))
       ) {
         candidate = rollChampionFromPool(pool);
         attempts++;
       }
       if (!candidate) return;
-      const nextIds = state.rollIds.slice();
-      nextIds[index] = candidate.id;
-      dispatch({ type: 'setRollIds', rollIds: nextIds });
+
+      const next = rollIds.slice();
+      next[index] = candidate.id;
+      setRollIds(next);
     },
-    [championById, getPoolForIndex, state.lockedSlots, state.rollIds]
+    [championData.pool.length, getPoolForIndex, lockedSlots, rollIds, rolledChampions]
   );
 
   const rerollAll = useCallback(() => {
-    const current = state.rollIds
-      .map((id) => championById.get(id))
-      .filter(Boolean) as Champion[];
-    if (current.length !== 5) return;
+    if (championData.pool.length === 0) return;
+    if (rolledChampions.length !== 5) return;
 
-    const next = current.slice();
+    const next = rolledChampions.slice();
     const used = new Set<string>();
 
     for (let i = 0; i < 5; i++) {
-      if (state.lockedSlots[i] && next[i]) used.add(next[i].id);
+      if (lockedSlots[i] && next[i]) used.add(next[i].id);
     }
 
     let uniquenessFailed = false;
     for (let i = 0; i < 5; i++) {
-      if (state.lockedSlots[i]) continue;
+      if (lockedSlots[i]) continue;
       const pool = getPoolForIndex(i);
       let candidate: Champion | null = null;
       let attempts = 0;
@@ -424,95 +403,85 @@ export default function App() {
       }
     }
 
-    dispatch({ type: 'setRollIds', rollIds: next.map((c) => c.id) });
+    setRollIds(next.map((c) => c.id));
     if (uniquenessFailed) {
-      dispatch({
-        type: 'setToast',
-        toast: 'Note: could not keep all champs unique with current pools.',
-      });
-      window.setTimeout(() => dispatch({ type: 'setToast', toast: '' }), 2500);
+      setToast('Note: could not keep all champs unique with current pools.');
+      window.setTimeout(() => setToast(''), 2500);
     }
-  }, [championById, getPoolForIndex, state.lockedSlots, state.rollIds]);
+  }, [championData.pool.length, getPoolForIndex, lockedSlots, rolledChampions]);
 
   const shareRoll = useCallback(async () => {
     try {
       const url = window.location.href;
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
-        dispatch({ type: 'setToast', toast: 'Link copied!' });
-        window.setTimeout(() => dispatch({ type: 'setToast', toast: '' }), 1500);
+        setToast('Link copied!');
+        window.setTimeout(() => setToast(''), 1500);
       } else {
-        dispatch({ type: 'setToast', toast: 'Copy not supported in this browser.' });
-        window.setTimeout(() => dispatch({ type: 'setToast', toast: '' }), 2000);
+        setToast('Copy not supported in this browser.');
+        window.setTimeout(() => setToast(''), 2000);
       }
     } catch {
-      dispatch({ type: 'setToast', toast: 'Could not copy link.' });
-      window.setTimeout(() => dispatch({ type: 'setToast', toast: '' }), 2000);
+      setToast('Could not copy link.');
+      window.setTimeout(() => setToast(''), 2000);
     }
   }, []);
 
   const onPlayerChange = useCallback((index: number, value: string) => {
-    const next = state.players.slice();
-    next[index] = value;
-    dispatch({ type: 'setPlayers', players: next });
-  }, [state.players]);
+    setPlayers((prev) => {
+      const next = prev.slice();
+      next[index] = value;
+      return next;
+    });
+  }, []);
 
   const saveTeam = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const trimmed = state.players.map((p) => p.trim());
-      if (!allPlayersFilled(trimmed)) {
-        dispatch({ type: 'poolsError', error: 'Please enter 5 summoner names.' });
+      const trimmed = players.map((p) => p.trim());
+      const any = trimmed.some(Boolean);
+      if (!any) {
+        setPoolsError('Please enter at least one summoner name.');
         return;
       }
 
       localStorage.setItem('players', JSON.stringify(trimmed));
-      localStorage.setItem('region', state.region);
-      localStorage.setItem('usePlayerPools', String(state.usePlayerPools));
+      localStorage.setItem('region', region);
+      localStorage.setItem('usePlayerPools', String(usePlayerPools));
 
-      if (state.usePlayerPools) {
-        await loadPlayerPools(trimmed, state.region, championByKey);
+      if (usePlayerPools) {
+        await loadPlayerPools(trimmed, region);
       } else {
-        dispatch({ type: 'setPlayerPools', pools: [null, null, null, null, null] });
+        setPlayerPools([null, null, null, null, null]);
       }
 
-      dispatch({ type: 'closeModal' });
+      setActiveModal('');
     },
-    [championByKey, loadPlayerPools, state.players, state.region, state.usePlayerPools]
+    [loadPlayerPools, players, region, usePlayerPools]
   );
-
-  const rolledChampions = useMemo(() => {
-    const champs = state.rollIds
-      .map((id) => championById.get(id))
-      .filter(Boolean) as Champion[];
-    return champs;
-  }, [championById, state.rollIds]);
 
   const championCards = rolledChampions.map((champ, index) => {
     const imgSrc = `${championData.imageBaseUrl}${champ.image}`;
     return (
       <div
         key={champ.id || champ.name}
-        className={`champion-list-item ${state.lockedSlots[index] ? 'locked' : ''}`}
+        className={`champion-list-item ${lockedSlots[index] ? 'locked' : ''}`}
         onClick={() => rerollChampion(index)}
       >
         <div className="champion-title">{champ.name}</div>
         <div className="champion-image">
-          <img
-            src={imgSrc}
-            alt={champ.name}
-          />
+          <img src={imgSrc} alt={champ.name} />
         </div>
         <div className="champion-role">{roles[index]}</div>
         <button
           className="slot-button"
-          onClick={(e) => {
-            e.stopPropagation();
-            dispatch({ type: 'toggleLock', index });
+          onClick={(ev) => {
+            ev.stopPropagation();
+            toggleLock(index);
           }}
           type="button"
         >
-          {state.lockedSlots[index] ? 'Unlock' : 'Lock'}
+          {lockedSlots[index] ? 'Unlock' : 'Lock'}
         </button>
       </div>
     );
@@ -524,8 +493,8 @@ export default function App() {
         title="All Random All Fill"
         championSource={championData.source}
         teamLabel={teamLabel}
-        poolsEnabled={state.usePlayerPools}
-        onTeamClick={() => dispatch({ type: 'openModal', modal: 'team' })}
+        poolsEnabled={usePlayerPools}
+        onTeamClick={() => setActiveModal('team')}
         onRerollAll={rerollAll}
         onShare={shareRoll}
       />
@@ -538,29 +507,26 @@ export default function App() {
         <div className="footer-row">
           <span>Click a slot to reroll it (unless locked).</span>
           <span className="source-pill">
-            Source: {championData.source === 'ddragon' ? 'Latest (Data Dragon)' : 'Bundled (offline)'}
+            Source:{' '}
+            {championData.source === 'ddragon'
+              ? 'Latest (Data Dragon)'
+              : 'Bundled (offline)'}
           </span>
         </div>
-        {!!state.toast && <div className="toast">{state.toast}</div>}
+        {!!toast && <div className="toast">{toast}</div>}
       </footer>
 
-      <Modal open={state.activeModal === 'team'} onClose={() => dispatch({ type: 'closeModal' })}>
+      <Modal open={activeModal === 'team'} onClose={() => setActiveModal('')}>
         <TeamSetup
-          players={state.players}
-          region={state.region}
+          players={players}
+          region={region}
           onPlayerChange={onPlayerChange}
-          onRegionChange={(r) => {
-            dispatch({ type: 'setRegion', region: r });
-            localStorage.setItem('region', r);
-          }}
+          onRegionChange={(r) => setRegion(r)}
           onSave={saveTeam}
-          loading={state.poolsLoading}
-          error={state.poolsError}
-          usingPools={state.usePlayerPools}
-          onTogglePools={(checked) => {
-            dispatch({ type: 'setUsePlayerPools', use: checked });
-            localStorage.setItem('usePlayerPools', String(checked));
-          }}
+          loading={poolsLoading}
+          error={poolsError}
+          usingPools={usePlayerPools}
+          onTogglePools={(checked) => setUsePlayerPools(checked)}
         />
       </Modal>
     </div>

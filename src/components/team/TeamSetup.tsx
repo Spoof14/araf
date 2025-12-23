@@ -70,7 +70,6 @@ export default function TeamSetup({
                 value={p || ''}
                 onChange={(e) => onPlayerChange(idx, e.target.value)}
                 placeholder="Summoner name"
-                required
               />
             </label>
           </div>
@@ -88,7 +87,7 @@ export default function TeamSetup({
         </label>
 
         <button className="team-button" type="submit" disabled={loading}>
-          {loading ? 'Loading pools…' : `Save (${filled}/5)`}
+          {loading ? 'Loading pools…' : `Save (${filled}/5 players)`}
         </button>
       </div>
 
