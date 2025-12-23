@@ -450,9 +450,7 @@ export default function App() {
       >
         <div className="champion-title">{champ.name}</div>
         <div className="champion-image" aria-busy={!loaded}>
-          {/* Placeholder is always present to avoid layout shift.
-              The image sits above it once it loads. */}
-          <div className="image-placeholder" aria-hidden="true" />
+          {!loaded && <div className="image-placeholder" aria-hidden="true" />}
           <img
             src={imgSrc}
             alt={champ.name}
