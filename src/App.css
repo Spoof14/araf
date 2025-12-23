@@ -128,7 +128,7 @@ a{
   display: block;
 }
 .champion-image img.loading{
-  opacity: 0;
+  opacity: 1;
 }
 .champion-image img.loaded{
   opacity: 1;
