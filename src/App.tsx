@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import './App.css';
 import championsJson from './champion.json';
@@ -119,6 +119,7 @@ function rollChampions(count: number, pool: Champion[]): Champion[] {
 }
 
 export default function App() {
+  const didInit = useRef(false);
   const roles = useMemo(
     () => ['Top', 'Jungle', 'Mid', 'Bottom', 'Support'],
     []
@@ -179,23 +180,29 @@ export default function App() {
       const version = await fetchLatestDDragonVersion();
       const list = await fetchChampionList({ version, locale: 'en_US' });
       if (!list.length) throw new Error('Empty champion list');
+      const byKey = buildChampionByKey(list);
       setChampionPool(list);
-      setChampionByKey(buildChampionByKey(list));
+      setChampionByKey(byKey);
       setChampionImageBaseUrl(getChampionImageBaseUrl(version));
       setChampionSource('ddragon');
-      return list;
+      return { pool: list, byKey };
     } catch {
       const localPool = getLocalChampionPool();
+      const byKey = buildChampionByKey(localPool);
       setChampionPool(localPool);
-      setChampionByKey(buildChampionByKey(localPool));
+      setChampionByKey(byKey);
       setChampionImageBaseUrl(`${import.meta.env.BASE_URL}champion/`);
       setChampionSource('local');
-      return localPool;
+      return { pool: localPool, byKey };
     }
   }, []);
 
   const loadPlayerPools = useCallback(
-    async (playersArg: string[], regionArg: string) => {
+    async (
+      playersArg: string[],
+      regionArg: string,
+      byKey: Record<string, Champion>
+    ) => {
       setPoolsLoading(true);
       setPoolsError('');
       try {
@@ -217,7 +224,7 @@ export default function App() {
             for (const m of list) {
               const id = m && (m as any).championId != null ? String((m as any).championId) : null;
               if (!id) continue;
-              const c = championByKey[id];
+              const c = byKey[id];
               if (c && !seen.has(c.id)) {
                 seen.add(c.id);
                 champs.push(c);
@@ -238,14 +245,19 @@ export default function App() {
         setPoolsLoading(false);
       }
     },
-    [championByKey]
+    []
   );
 
   // initial boot
   useEffect(() => {
+    // Prevent accidental re-runs that would overwrite rerolls with URL state.
+    // (This can happen when hook dependencies change as async state updates land.)
+    if (didInit.current) return;
+    didInit.current = true;
+
     let mounted = true;
     (async () => {
-      const pool = await loadChampionPool();
+      const { pool, byKey } = await loadChampionPool();
       if (!mounted) return;
 
       const restored = getRollFromUrl(pool);
@@ -263,7 +275,8 @@ export default function App() {
       if (savedUsePools && allPlayersFilled(savedPlayers)) {
         await loadPlayerPools(
           savedPlayers.map((p) => p.trim()),
-          savedRegion
+          savedRegion,
+          byKey
         );
       }
     })();
@@ -402,14 +415,14 @@ export default function App() {
       setPoolsError('');
 
       if (usePlayerPools) {
-        await loadPlayerPools(trimmed, region);
+        await loadPlayerPools(trimmed, region, championByKey);
       } else {
         setPlayerPools([null, null, null, null, null]);
       }
 
       setActiveModal('');
     },
-    [loadPlayerPools, players, region, usePlayerPools]
+    [championByKey, loadPlayerPools, players, region, usePlayerPools]
   );
 
   const championCards = randomChampions.map((champ, index) => {
