@@ -31,6 +31,7 @@ export async function fetchChampionList({ version, locale = 'en_US' }) {
     const champ = data[key];
     return {
       id: champ.id,
+      key: champ.key,
       name: champ.name,
       image: champ.image && champ.image.full ? champ.image.full : '',
     };
