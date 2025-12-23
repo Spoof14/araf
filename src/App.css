@@ -127,24 +127,6 @@ a{
   object-fit: cover;
   display: block;
 }
-.champion-image img.loading{
-  opacity: 1;
-}
-.champion-image img.loaded{
-  opacity: 1;
-  transition: opacity 140ms ease;
-}
-.image-placeholder{
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.05) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.1s linear infinite;
-}
-@keyframes shimmer{
-  0%{ background-position: 200% 0; }
-  100%{ background-position: -200% 0; }
-}
 .champion-list-item.locked{ opacity: 0.75; }
 .slot-button{ margin-top: 0.5rem; padding: 0.35rem 0.75rem; border-radius: 10px; border: 1px solid #444; background:#111; color:#FEFEFE; cursor: pointer; }
 .slot-button:hover{ background:#1b1b1b; }

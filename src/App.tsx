@@ -143,13 +143,6 @@ export default function App() {
     false,
     false,
   ]);
-  const [imageLoaded, setImageLoaded] = useState<boolean[]>([
-    false,
-    false,
-    false,
-    false,
-    false,
-  ]);
   const [toast, setToast] = useState<string>('');
 
   const [players, setPlayers] = useState<string[]>(['', '', '', '', '']);
@@ -258,7 +251,6 @@ export default function App() {
       const restored = getRollFromUrl(pool);
       const initialRoll = restored ?? rollChampions(5, pool);
       setRandomChampions(initialRoll);
-      setImageLoaded([false, false, false, false, false]);
       syncUrlWithRoll(initialRoll);
 
       const savedPlayers = readPlayersFromStorage();
@@ -290,17 +282,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [activeModal]);
 
-  const markImageLoaded = useCallback((index: number, champId: string) => {
-    setImageLoaded((prev) => {
-      const current = randomChampions[index];
-      if (!current || current.id !== champId) return prev;
-      if (prev[index]) return prev;
-      const next = prev.slice();
-      next[index] = true;
-      return next;
-    });
-  }, [randomChampions]);
-
   const toggleLock = useCallback((index: number) => {
     setLockedSlots((prev) => {
       const next = prev.slice();
@@ -331,11 +312,6 @@ export default function App() {
         syncUrlWithRoll(next);
         return next;
       });
-      setImageLoaded((prev) => {
-        const next = prev.slice();
-        next[index] = false;
-        return next;
-      });
     },
     [getPoolForIndex, lockedSlots]
   );
@@ -345,7 +321,6 @@ export default function App() {
       if (prev.length !== 5) return prev;
       const next = prev.slice();
       const used = new Set<string>();
-      const newLoaded = imageLoaded.slice();
 
       for (let i = 0; i < 5; i++) {
         if (lockedSlots[i] && next[i]) used.add(next[i].id);
@@ -375,11 +350,9 @@ export default function App() {
         if (candidate) {
           next[i] = candidate;
           used.add(candidate.id);
-          newLoaded[i] = false;
         }
       }
 
-      setImageLoaded(newLoaded);
       syncUrlWithRoll(next);
       if (uniquenessFailed) {
         setToast('Note: could not keep all champs unique with current pools.');
@@ -387,7 +360,7 @@ export default function App() {
       }
       return next;
     });
-  }, [getPoolForIndex, imageLoaded, lockedSlots]);
+  }, [getPoolForIndex, lockedSlots]);
 
   const shareRoll = useCallback(async () => {
     try {
@@ -440,7 +413,6 @@ export default function App() {
   );
 
   const championCards = randomChampions.map((champ, index) => {
-    const loaded = !!imageLoaded[index];
     const imgSrc = `${championImageBaseUrl}${champ.image}`;
     return (
       <div
@@ -449,14 +421,10 @@ export default function App() {
         onClick={() => rerollChampion(index)}
       >
         <div className="champion-title">{champ.name}</div>
-        <div className="champion-image" aria-busy={!loaded}>
-          {!loaded && <div className="image-placeholder" aria-hidden="true" />}
+        <div className="champion-image">
           <img
             src={imgSrc}
             alt={champ.name}
-            className={loaded ? 'loaded' : 'loading'}
-            onLoad={() => markImageLoaded(index, champ.id)}
-            onError={() => markImageLoaded(index, champ.id)}
           />
         </div>
         <div className="champion-role">{roles[index]}</div>
