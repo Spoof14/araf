@@ -17,7 +17,7 @@ wrangler secret put RIOT_API_KEY
 3. Deploy, then set in the frontend build:
 
 ```bash
-REACT_APP_RIOT_PROXY_URL="https://<your-worker-subdomain>.workers.dev" yarn build
+VITE_RIOT_PROXY_URL="https://<your-worker-subdomain>.workers.dev" yarn build
 ```
 
 ### Frontend calls
