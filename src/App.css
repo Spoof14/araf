@@ -213,8 +213,14 @@ a {
 }
 .toast {
   margin-top: 0.5rem;
+  padding: 0.3rem 0.8rem;
   font-size: 0.9rem;
-  opacity: 0.9;
+  color: var(--gold);
+  background: #0f0f0f;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  align-self: center;
+  display: inline-block;
 }
 
 /* Phones (portrait): stack slots vertically as compact rows. */

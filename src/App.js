@@ -65,6 +65,7 @@ class App extends Component {
 
 	componentWillUnmount(){
 		window.removeEventListener('keydown', this.onKeyDown);
+		if(this.toastTimer) window.clearTimeout(this.toastTimer);
 	}
 
 	onKeyDown(e){
@@ -249,16 +250,16 @@ class App extends Component {
 
 		let champs = []
 		while(champs.length < 5){
-			let element = this.rollChampion();
-			
+			let element = this.rollChampion(pool);
+
 			if(!this.someChampIsSame(champs, element))
 				champs.push(element)
 		}
 		return champs
 	}
 
-	rollChampion(){
-		const pool = this.state.championPool;
+	rollChampion(poolOverride){
+		const pool = poolOverride ? poolOverride : this.state.championPool;
 		var random = Math.floor(Math.random() * pool.length);
 		var element = pool[random];
 		return {id: element.id, name: element.name, image: element.image}
@@ -325,21 +326,46 @@ class App extends Component {
 		this.setState({ lockedSlots });
 	}
 
-	async shareRoll(){
+	showToast(message){
+		if(this.toastTimer) window.clearTimeout(this.toastTimer);
+		this.setState({ toast: message });
+		this.toastTimer = window.setTimeout(() => this.setState({ toast: '' }), 2500);
+	}
+
+	copyToClipboardFallback(text){
 		try{
-			const url = window.location.href;
-			if(navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
-				await navigator.clipboard.writeText(url);
-				this.setState({ toast: 'Link copied!' });
-				window.setTimeout(() => this.setState({ toast: '' }), 1500);
-			}else{
-				this.setState({ toast: 'Copy not supported in this browser.' });
-				window.setTimeout(() => this.setState({ toast: '' }), 2000);
-			}
+			const textarea = document.createElement('textarea');
+			textarea.value = text;
+			textarea.setAttribute('readonly', '');
+			textarea.style.position = 'fixed';
+			textarea.style.opacity = '0';
+			document.body.appendChild(textarea);
+			textarea.select();
+			const ok = document.execCommand('copy');
+			document.body.removeChild(textarea);
+			return ok;
 		}catch(_e){
-			this.setState({ toast: 'Could not copy link.' });
-			window.setTimeout(() => this.setState({ toast: '' }), 2000);
+			return false;
 		}
+	}
+
+	async shareRoll(){
+		const url = window.location.href;
+		let copied = false;
+
+		if(navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
+			try{
+				await navigator.clipboard.writeText(url);
+				copied = true;
+			}catch(_e){
+				// Permission denied or unavailable; try the legacy fallback below.
+			}
+		}
+		if(!copied){
+			copied = this.copyToClipboardFallback(url);
+		}
+
+		this.showToast(copied ? 'Link copied!' : 'Could not copy link.');
 	}
 }
 
