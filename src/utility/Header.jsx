@@ -6,7 +6,7 @@ export default class Header extends PureComponent {
         return (
             <header className="header">
                 <h1>
-                    <a href="/">
+                    <a href={`${process.env.PUBLIC_URL || ''}/`}>
                         {title}
                     </a>
 

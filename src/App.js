@@ -40,7 +40,7 @@ class App extends Component {
 	async componentDidMount(){
 		let summonerName = localStorage.getItem('summonerName')
 		this.setState({
-			summonerName: summonerName !== 'undefined' ? summonerName : ''
+			summonerName: summonerName && summonerName !== 'undefined' ? summonerName : ''
 		})
 
 		window.addEventListener('keydown', this.onKeyDown);
@@ -163,7 +163,7 @@ class App extends Component {
 
 	}
 	logout(){
-		localStorage.setItem('summonerName', '')
+		localStorage.removeItem('summonerName')
 		this.setState({
 			summonerName:''
 		})
@@ -172,17 +172,41 @@ class App extends Component {
 	render() {
 		let { randomChampions, showModal, summonerName, msg, championImageBaseUrl, lockedSlots, championSource, toast } = this.state;
 		let divs = randomChampions.map((champ, index) => {
+			const role = this.state.roles[index];
+			const locked = lockedSlots[index];
 			return (
-				<div key={champ.id || champ.name} className={`champion-list-item ${lockedSlots[index] ? 'locked' : ''}`} onClick={() => this.rerollChampion(index)}  >
-					<span>{champ.name}</span>
-					<img src={`${championImageBaseUrl}${champ.image}`} alt="champion"></img>
-					<span>{this.state.roles[index]}</span>
+				<div
+					key={champ.id || champ.name}
+					className={`champion-list-item ${locked ? 'locked' : ''}`}
+					onClick={() => this.rerollChampion(index)}
+					onKeyDown={(e) => {
+						if(e.key === 'Enter' || e.key === ' '){
+							e.preventDefault();
+							this.rerollChampion(index);
+						}
+					}}
+					role="button"
+					tabIndex={0}
+					aria-label={`Reroll ${role} champion (currently ${champ.name})`}
+				>
+					<img
+						src={`${championImageBaseUrl}${champ.image}`}
+						alt={champ.name}
+						width="120"
+						height="120"
+					/>
+					<div className="champion-info">
+						<span className="champion-name">{champ.name}</span>
+						<span className="champion-role">{role}</span>
+					</div>
 					<button
 						className="slot-button"
 						onClick={(e) => { e.stopPropagation(); this.toggleLock(index); }}
 						type="button"
+						aria-pressed={locked}
+						aria-label={`${locked ? 'Unlock' : 'Lock'} ${role} champion`}
 					>
-						{lockedSlots[index] ? 'Unlock' : 'Lock'}
+						{locked ? 'Unlock' : 'Lock'}
 					</button>
 				</div>
 			)
@@ -247,10 +271,10 @@ class App extends Component {
 	rerollChampion(index){
 		if(this.state.lockedSlots[index]) return;
 
-		let { randomChampions } = this.state;
-		let currChamp = randomChampions[index];
+		const randomChampions = this.state.randomChampions.slice();
+		const currChamp = randomChampions[index];
 		let newChamp = currChamp;
-		
+
 		while((newChamp && currChamp && newChamp.id === currChamp.id) || this.someChampIsSame(randomChampions, newChamp)){
 			newChamp = this.rollChampion()
 		}
