@@ -291,7 +291,8 @@ a {
     gap: 0.75rem;
     padding: 0.5rem 0.75rem;
   }
-  .champion-list-item img {
+  .champion-list-item img,
+  .champion-list-item.has-art .champion-image img {
     width: 64px;
     height: 64px;
     aspect-ratio: auto;
@@ -355,7 +356,8 @@ a {
     flex: 1 1 0;
     padding: 0.5rem;
   }
-  .champion-list-item img {
+  .champion-list-item img,
+  .champion-list-item.has-art .champion-image img {
     width: 64px;
     height: 64px;
     aspect-ratio: auto;
