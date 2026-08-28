@@ -11,8 +11,9 @@ import {
 	getChampionLoadingImageUrl
 } from './utility/ddragon';
 
-// Viewports where the compact square icon beats the tall loading art.
-const COMPACT_MEDIA = '(max-width: 600px), (max-height: 500px) and (orientation: landscape)';
+// Phone portrait only: square icons fit the compact row layout.
+// Landscape and desktop keep the tall loading art so cards can grow.
+const COMPACT_MEDIA = '(max-width: 600px)';
 
 class App extends Component {
 	constructor(props) {
