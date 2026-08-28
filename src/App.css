@@ -119,11 +119,13 @@ a {
 .champion-list {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: center;
+  align-content: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: 1rem;
   padding: 1rem;
+  flex: 1;
 }
 
 .champion-list-item {
@@ -160,6 +162,55 @@ a {
   border-color: var(--gold);
   background: var(--panel-raised);
 }
+
+.champion-image {
+  display: block;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+/* Cards with tall loading-screen art: full-bleed image with overlaid text. */
+.champion-list-item.has-art {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  width: clamp(9.5rem, 16vw, 14rem);
+}
+.champion-list-item.has-art .champion-image {
+  width: 100%;
+}
+.champion-list-item.has-art .champion-image img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 308 / 560;
+  object-fit: cover;
+  border-radius: 0;
+  display: block;
+  transition: transform 0.2s ease;
+}
+.champion-list-item.has-art:hover .champion-image img {
+  transform: scale(1.04);
+}
+.champion-list-item.has-art .champion-info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  align-items: center;
+  padding: 2.5rem 0.5rem 0.75rem;
+  background: linear-gradient(to top, rgba(10, 12, 16, 0.92) 30%, transparent);
+  pointer-events: none;
+}
+.champion-list-item.has-art .slot-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  margin: 0;
+  background: rgba(10, 12, 16, 0.75);
+}
+.champion-list-item.has-art.locked {
+  box-shadow: 0 0 0 1px var(--gold), 0 0 14px rgba(200, 170, 110, 0.45);
+}
 .champion-list-item.locked img {
   opacity: 0.8;
 }
@@ -173,6 +224,7 @@ a {
 .champion-name {
   font-weight: 600;
   overflow-wrap: anywhere;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 .champion-role {
   font-size: 0.85rem;
@@ -189,6 +241,7 @@ a {
   background: #111;
   color: var(--text);
   cursor: pointer;
+  pointer-events: auto;
 }
 .slot-button:hover {
   background: #1b1b1b;
@@ -241,7 +294,34 @@ a {
   .champion-list-item img {
     width: 64px;
     height: 64px;
+    aspect-ratio: auto;
+    border-radius: 10%;
     flex-shrink: 0;
+  }
+  .champion-list-item.has-art {
+    position: static;
+    overflow: visible;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+  }
+  .champion-list-item.has-art .champion-image {
+    width: auto;
+  }
+  .champion-list-item.has-art:hover .champion-image img {
+    transform: none;
+  }
+  .champion-list-item.has-art .champion-info {
+    position: static;
+    background: none;
+    padding: 0;
+    pointer-events: auto;
+  }
+  .champion-list-item.has-art .slot-button {
+    position: static;
+    background: #111;
+  }
+  .champion-list-item.has-art.locked {
+    box-shadow: none;
   }
   .champion-info {
     align-items: flex-start;
@@ -278,6 +358,32 @@ a {
   .champion-list-item img {
     width: 64px;
     height: 64px;
+    aspect-ratio: auto;
+    border-radius: 10%;
+  }
+  .champion-list-item.has-art {
+    position: static;
+    overflow: visible;
+    width: auto;
+    padding: 0.5rem;
+  }
+  .champion-list-item.has-art:hover .champion-image img {
+    transform: none;
+  }
+  .champion-list-item.has-art .champion-info {
+    position: static;
+    background: none;
+    padding: 0;
+    align-items: center;
+    pointer-events: auto;
+  }
+  .champion-list-item.has-art .slot-button {
+    position: static;
+    background: #111;
+    margin-top: auto;
+  }
+  .champion-list-item.has-art.locked {
+    box-shadow: none;
   }
   .footer {
     margin: 0.25rem 1rem 0.5rem;

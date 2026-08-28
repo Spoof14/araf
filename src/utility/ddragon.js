@@ -41,3 +41,11 @@ export function getChampionImageBaseUrl(version) {
   return `${DDRAGON_BASE_URL}/cdn/${version}/img/champion/`;
 }
 
+/**
+ * Tall loading-screen art (308x560), suited for card layouts.
+ * Unversioned CDN path, so it works with any champion id.
+ */
+export function getChampionLoadingImageUrl(championId) {
+  return `${DDRAGON_BASE_URL}/cdn/img/champion/loading/${championId}_0.jpg`;
+}
+

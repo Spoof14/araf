@@ -7,8 +7,12 @@ import Login from './components/login/Login';
 import {
 	fetchLatestDDragonVersion,
 	fetchChampionList,
-	getChampionImageBaseUrl
+	getChampionImageBaseUrl,
+	getChampionLoadingImageUrl
 } from './utility/ddragon';
+
+// Viewports where the compact square icon beats the tall loading art.
+const COMPACT_MEDIA = '(max-width: 600px), (max-height: 500px) and (orientation: landscape)';
 
 class App extends Component {
 	constructor(props) {
@@ -172,13 +176,17 @@ class App extends Component {
 
 	render() {
 		let { randomChampions, showModal, summonerName, msg, championImageBaseUrl, lockedSlots, championSource, toast } = this.state;
+		// Loading-screen art lives on the Data Dragon CDN, so only use it when
+		// the champion list itself came from there (i.e. the network is up).
+		const hasArt = championSource === 'ddragon';
 		let divs = randomChampions.map((champ, index) => {
 			const role = this.state.roles[index];
 			const locked = lockedSlots[index];
+			const iconUrl = `${championImageBaseUrl}${champ.image}`;
 			return (
 				<div
 					key={champ.id || champ.name}
-					className={`champion-list-item ${locked ? 'locked' : ''}`}
+					className={`champion-list-item ${hasArt ? 'has-art' : ''} ${locked ? 'locked' : ''}`}
 					onClick={() => this.rerollChampion(index)}
 					onKeyDown={(e) => {
 						if(e.key === 'Enter' || e.key === ' '){
@@ -190,12 +198,20 @@ class App extends Component {
 					tabIndex={0}
 					aria-label={`Reroll ${role} champion (currently ${champ.name})`}
 				>
-					<img
-						src={`${championImageBaseUrl}${champ.image}`}
-						alt={champ.name}
-						width="120"
-						height="120"
-					/>
+					{hasArt ? (
+						<picture className="champion-image">
+							<source media={COMPACT_MEDIA} srcSet={iconUrl} />
+							<img src={getChampionLoadingImageUrl(champ.id)} alt={champ.name} />
+						</picture>
+					) : (
+						<img
+							className="champion-image"
+							src={iconUrl}
+							alt={champ.name}
+							width="120"
+							height="120"
+						/>
+					)}
 					<div className="champion-info">
 						<span className="champion-name">{champ.name}</span>
 						<span className="champion-role">{role}</span>
