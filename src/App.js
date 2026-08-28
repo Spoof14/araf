@@ -11,10 +11,6 @@ import {
 	getChampionLoadingImageUrl
 } from './utility/ddragon';
 
-// Phone portrait only: square icons fit the compact row layout.
-// Landscape and desktop keep the tall loading art so cards can grow.
-const COMPACT_MEDIA = '(max-width: 600px)';
-
 class App extends Component {
 	constructor(props) {
 		super(props)
@@ -201,7 +197,6 @@ class App extends Component {
 				>
 					{hasArt ? (
 						<picture className="champion-image">
-							<source media={COMPACT_MEDIA} srcSet={iconUrl} />
 							<img src={getChampionLoadingImageUrl(champ.id)} alt={champ.name} />
 						</picture>
 					) : (
