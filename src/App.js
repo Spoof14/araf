@@ -7,7 +7,8 @@ import Login from './components/login/Login';
 import {
 	fetchLatestDDragonVersion,
 	fetchChampionList,
-	getChampionImageBaseUrl
+	getChampionImageBaseUrl,
+	getChampionLoadingImageUrl
 } from './utility/ddragon';
 
 class App extends Component {
@@ -40,7 +41,7 @@ class App extends Component {
 	async componentDidMount(){
 		let summonerName = localStorage.getItem('summonerName')
 		this.setState({
-			summonerName: summonerName !== 'undefined' ? summonerName : ''
+			summonerName: summonerName && summonerName !== 'undefined' ? summonerName : ''
 		})
 
 		window.addEventListener('keydown', this.onKeyDown);
@@ -65,6 +66,7 @@ class App extends Component {
 
 	componentWillUnmount(){
 		window.removeEventListener('keydown', this.onKeyDown);
+		if(this.toastTimer) window.clearTimeout(this.toastTimer);
 	}
 
 	onKeyDown(e){
@@ -163,7 +165,7 @@ class App extends Component {
 
 	}
 	logout(){
-		localStorage.setItem('summonerName', '')
+		localStorage.removeItem('summonerName')
 		this.setState({
 			summonerName:''
 		})
@@ -171,18 +173,53 @@ class App extends Component {
 
 	render() {
 		let { randomChampions, showModal, summonerName, msg, championImageBaseUrl, lockedSlots, championSource, toast } = this.state;
+		// Loading-screen art lives on the Data Dragon CDN, so only use it when
+		// the champion list itself came from there (i.e. the network is up).
+		const hasArt = championSource === 'ddragon';
 		let divs = randomChampions.map((champ, index) => {
+			const role = this.state.roles[index];
+			const locked = lockedSlots[index];
+			const iconUrl = `${championImageBaseUrl}${champ.image}`;
 			return (
-				<div key={champ.id || champ.name} className={`champion-list-item ${lockedSlots[index] ? 'locked' : ''}`} onClick={() => this.rerollChampion(index)}  >
-					<span>{champ.name}</span>
-					<img src={`${championImageBaseUrl}${champ.image}`} alt="champion"></img>
-					<span>{this.state.roles[index]}</span>
+				<div
+					key={champ.id || champ.name}
+					className={`champion-list-item ${hasArt ? 'has-art' : ''} ${locked ? 'locked' : ''}`}
+					onClick={() => this.rerollChampion(index)}
+					onKeyDown={(e) => {
+						if(e.key === 'Enter' || e.key === ' '){
+							e.preventDefault();
+							this.rerollChampion(index);
+						}
+					}}
+					role="button"
+					tabIndex={0}
+					aria-label={`Reroll ${role} champion (currently ${champ.name})`}
+				>
+					{hasArt ? (
+						<picture className="champion-image">
+							<img src={getChampionLoadingImageUrl(champ.id)} alt={champ.name} />
+						</picture>
+					) : (
+						<img
+							className="champion-image"
+							src={iconUrl}
+							alt={champ.name}
+							width="120"
+							height="120"
+						/>
+					)}
+					<div className="champion-info">
+						<span className="champion-name">{champ.name}</span>
+						<span className="champion-role">{role}</span>
+					</div>
 					<button
 						className="slot-button"
 						onClick={(e) => { e.stopPropagation(); this.toggleLock(index); }}
 						type="button"
+						aria-pressed={locked}
+						aria-label={`${locked ? 'Unlock' : 'Lock'} ${role} champion`}
 					>
-						{lockedSlots[index] ? 'Unlock' : 'Lock'}
+						{locked ? 'Unlock' : 'Lock'}
 					</button>
 				</div>
 			)
@@ -225,16 +262,16 @@ class App extends Component {
 
 		let champs = []
 		while(champs.length < 5){
-			let element = this.rollChampion();
-			
+			let element = this.rollChampion(pool);
+
 			if(!this.someChampIsSame(champs, element))
 				champs.push(element)
 		}
 		return champs
 	}
 
-	rollChampion(){
-		const pool = this.state.championPool;
+	rollChampion(poolOverride){
+		const pool = poolOverride ? poolOverride : this.state.championPool;
 		var random = Math.floor(Math.random() * pool.length);
 		var element = pool[random];
 		return {id: element.id, name: element.name, image: element.image}
@@ -247,10 +284,10 @@ class App extends Component {
 	rerollChampion(index){
 		if(this.state.lockedSlots[index]) return;
 
-		let { randomChampions } = this.state;
-		let currChamp = randomChampions[index];
+		const randomChampions = this.state.randomChampions.slice();
+		const currChamp = randomChampions[index];
 		let newChamp = currChamp;
-		
+
 		while((newChamp && currChamp && newChamp.id === currChamp.id) || this.someChampIsSame(randomChampions, newChamp)){
 			newChamp = this.rollChampion()
 		}
@@ -301,21 +338,46 @@ class App extends Component {
 		this.setState({ lockedSlots });
 	}
 
-	async shareRoll(){
+	showToast(message){
+		if(this.toastTimer) window.clearTimeout(this.toastTimer);
+		this.setState({ toast: message });
+		this.toastTimer = window.setTimeout(() => this.setState({ toast: '' }), 2500);
+	}
+
+	copyToClipboardFallback(text){
 		try{
-			const url = window.location.href;
-			if(navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
-				await navigator.clipboard.writeText(url);
-				this.setState({ toast: 'Link copied!' });
-				window.setTimeout(() => this.setState({ toast: '' }), 1500);
-			}else{
-				this.setState({ toast: 'Copy not supported in this browser.' });
-				window.setTimeout(() => this.setState({ toast: '' }), 2000);
-			}
+			const textarea = document.createElement('textarea');
+			textarea.value = text;
+			textarea.setAttribute('readonly', '');
+			textarea.style.position = 'fixed';
+			textarea.style.opacity = '0';
+			document.body.appendChild(textarea);
+			textarea.select();
+			const ok = document.execCommand('copy');
+			document.body.removeChild(textarea);
+			return ok;
 		}catch(_e){
-			this.setState({ toast: 'Could not copy link.' });
-			window.setTimeout(() => this.setState({ toast: '' }), 2000);
+			return false;
 		}
+	}
+
+	async shareRoll(){
+		const url = window.location.href;
+		let copied = false;
+
+		if(navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
+			try{
+				await navigator.clipboard.writeText(url);
+				copied = true;
+			}catch(_e){
+				// Permission denied or unavailable; try the legacy fallback below.
+			}
+		}
+		if(!copied){
+			copied = this.copyToClipboardFallback(url);
+		}
+
+		this.showToast(copied ? 'Link copied!' : 'Could not copy link.');
 	}
 }
 
